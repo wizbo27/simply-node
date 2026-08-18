@@ -18,11 +18,12 @@
 
 import { execa } from 'execa';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import SfdxDependabot, {
+import SfdxDependabot from '../../../../src/commands/simply/cicd/sfdx-dependabot.js';
+import {
   filterProject,
   generateMrDescription,
   resolvePackageDetails,
-} from '../../../../src/commands/simply/cicd/sfdx-dependabot.js';
+} from '../../../../src/common/sfdxDependabot/dependabotRun.js';
 import type { VcsProject } from '../../../../src/common/vcs/index.js';
 
 vi.mock('execa');
