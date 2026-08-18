@@ -16,6 +16,7 @@
 
 import { Messages } from '@salesforce/core';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
+import { listAlmProviderKinds, type AlmProviderKind } from '../../../../common/alm/index.js';
 import { logger } from '../../../../common/logger.js';
 import {
   afterScript,
@@ -95,13 +96,18 @@ export default class NotifyProject extends SfCommand<NotifyProjectResult> {
       summary: messages.getMessage('flags.instance-url.summary'),
       env: 'SIMPLY_CICD_INSTANCE_URL',
     }),
-    'jira-base-url': Flags.string({
-      summary: messages.getMessage('flags.jira-base-url.summary'),
-      env: 'SIMPLY_CICD_JIRA_BASE_URL',
+    'alm-base-url': Flags.string({
+      summary: messages.getMessage('flags.alm-base-url.summary'),
+      env: 'SIMPLY_CICD_ALM_BASE_URL',
     }),
-    'jira-project-key': Flags.string({
-      summary: messages.getMessage('flags.jira-project-key.summary'),
-      env: 'SIMPLY_CICD_JIRA_PROJECT_KEY',
+    'alm-project-key': Flags.string({
+      summary: messages.getMessage('flags.alm-project-key.summary'),
+      env: 'SIMPLY_CICD_ALM_PROJECT_KEY',
+    }),
+    'alm-provider': Flags.custom<AlmProviderKind>({ options: listAlmProviderKinds() })({
+      summary: messages.getMessage('flags.alm-provider.summary'),
+      default: 'jira',
+      env: 'SIMPLY_CICD_ALM_PROVIDER',
     }),
     'jwt-key-file': Flags.string({
       summary: messages.getMessage('flags.jwt-key-file.summary'),
@@ -161,8 +167,9 @@ export default class NotifyProject extends SfCommand<NotifyProjectResult> {
       devhubToolingInstanceUrl: flags['devhub-tooling-instance-url'],
       devhubToolingUsername: flags['devhub-tooling-username'],
       instanceUrl: flags['instance-url'],
-      jiraBaseUrl: flags['jira-base-url'],
-      jiraProjectKey: flags['jira-project-key'],
+      almBaseUrl: flags['alm-base-url'],
+      almProjectKey: flags['alm-project-key'],
+      almProvider: flags['alm-provider'],
       jwtKeyFile: flags['jwt-key-file'],
       prevInstalledPackageVersion: flags['prev-installed-package-version'],
       subscriberPackageVersionId: flags['subscriber-package-version-id'],

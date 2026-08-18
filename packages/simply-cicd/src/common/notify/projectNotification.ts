@@ -17,6 +17,7 @@
 import { promises as fs } from 'node:fs';
 import { execa } from 'execa';
 import { getDefaultPackageDirectory, isSubscriberPackageVersionId, readSfdxProject } from '@simplysf/simply-core';
+import { createAlmProvider, type AlmProviderKind } from '../alm/index.js';
 import { runSf, runSfJson } from '../exec/sfCli.js';
 import { logger } from '../logger.js';
 import { appendToEnvFile } from '../env.js';
@@ -61,8 +62,9 @@ export type NotifyProjectOptions = {
   devhubToolingInstanceUrl?: string;
   devhubToolingUsername?: string;
   instanceUrl?: string;
-  jiraBaseUrl?: string;
-  jiraProjectKey?: string;
+  almBaseUrl?: string;
+  almProjectKey?: string;
+  almProvider?: AlmProviderKind;
   jwtKeyFile?: string;
   prevInstalledPackageVersion?: string;
   subscriberPackageVersionId?: string;
@@ -256,10 +258,11 @@ export async function afterScript(options: NotifyProjectOptions): Promise<Notify
     const { stories, storiesWithUrl } = await getCommitStories(
       options.prevInstalledPackageVersion,
       options.targetPackageVersion,
-      options.jiraProjectKey,
+      options.almProjectKey,
       {
         debug: options.debug,
-        jiraBaseUrl: options.jiraBaseUrl,
+        almBaseUrl: options.almBaseUrl,
+        almProvider: createAlmProvider(options.almProvider ?? 'jira'),
       },
     );
     notifyCommitStories = stories;

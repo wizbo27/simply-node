@@ -1,10 +1,10 @@
 # summary
 
-Send a project deployment notification to Microsoft Teams, with Jira story integration.
+Send a project deployment notification to Microsoft Teams, with issue-tracker integration.
 
 # description
 
-Run once with `--before-script` at the start of a deployment pipeline (to record the previously installed and target package versions), and once with `--after-script` at the end (to post a success or failure card to Teams, including the Jira stories that shipped between those two versions).
+Run once with `--before-script` at the start of a deployment pipeline (to record the previously installed and target package versions), and once with `--after-script` at the end (to post a success or failure card to Teams, including the tracked issues that shipped between those two versions).
 
 # flags.after-script.summary
 
@@ -74,13 +74,17 @@ Whether the notification is actually sent. Defaults to false so pipelines can ga
 
 Login instance URL for the target org.
 
-# flags.jira-base-url.summary
+# flags.alm-base-url.summary
 
-Base URL for linking a Jira issue key, e.g. https://jira.example.com/browse. Story keys are shown without links if not provided.
+Base URL that an issue reference is appended to, e.g. https://jira.example.com/browse for Jira or https://gitlab.com/group/project/-/issues for GitLab Issues. References are shown without links if not provided.
 
-# flags.jira-project-key.summary
+# flags.alm-project-key.summary
 
-Fallback Jira project key(s) used to search commit messages for story references, if none are configured in .sfdevrc.json.
+Fallback project key(s) used to search commit messages for issue references, if none are configured in .sfdevrc.json. Only used by prefix-keyed trackers such as Jira.
+
+# flags.alm-provider.summary
+
+The issue tracker whose reference format to look for in commit messages.
 
 # flags.jwt-key-file.summary
 

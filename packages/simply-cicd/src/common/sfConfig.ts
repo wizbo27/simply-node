@@ -15,35 +15,60 @@
  */
 
 import fs from 'node:fs';
+import { logger } from './logger.js';
 
 type SfDevRcConfig = {
+  almProjectKey?: string;
+  almProjectKeys?: string[];
+  /** @deprecated Renamed to `almProjectKey`. Still read, but warns. */
   jiraProjectKey?: string;
+  /** @deprecated Renamed to `almProjectKeys`. Still read, but warns. */
   jiraProjectKeys?: string[];
 };
 
+/** Collects a single-key and multi-key field into one deduplicated, non-empty list. */
+function collectKeys(single: string | undefined, multiple: string[] | undefined): string[] {
+  const keys: string[] = [];
+  if (single) {
+    keys.push(single);
+  }
+  if (Array.isArray(multiple)) {
+    keys.push(...multiple);
+  }
+  return [...new Set(keys.filter(Boolean))];
+}
+
 /**
- * Retrieves Jira project keys from the `.sfdevrc.json` configuration file, or falls back to a
+ * Retrieves ALM project keys from the `.sfdevrc.json` configuration file, or falls back to a
  * provided default. Reads a single or multiple project keys from the configuration, deduplicates
  * them, and filters out empty values.
+ *
+ * The legacy `jiraProjectKey`/`jiraProjectKeys` fields are still honored, so existing repositories
+ * keep working, but `almProjectKey`/`almProjectKeys` win outright when present — the two sets are
+ * not merged, so a repository migrating one key at a time gets the new value rather than a blend.
  */
-export function getJiraProjectKeys(passedProjectKey?: string): string[] {
+export function getAlmProjectKeys(passedProjectKey?: string): string[] {
   let projectKeys: string[] = [];
   try {
     if (fs.existsSync('.sfdevrc.json')) {
       const content = fs.readFileSync('.sfdevrc.json', 'utf8');
       const config = JSON.parse(content) as SfDevRcConfig;
-      if (config.jiraProjectKey) {
-        projectKeys.push(config.jiraProjectKey);
-      }
-      if (Array.isArray(config.jiraProjectKeys)) {
-        projectKeys.push(...config.jiraProjectKeys);
+
+      projectKeys = collectKeys(config.almProjectKey, config.almProjectKeys);
+
+      if (projectKeys.length === 0) {
+        const legacyKeys = collectKeys(config.jiraProjectKey, config.jiraProjectKeys);
+        if (legacyKeys.length > 0) {
+          logger.warn(
+            'The .sfdevrc.json fields "jiraProjectKey" and "jiraProjectKeys" are deprecated. Rename them to "almProjectKey" and "almProjectKeys"; the old names will be removed in a future release.',
+          );
+          projectKeys = legacyKeys;
+        }
       }
     }
   } catch {
     // Ignore and fall back to the passed command-line project key.
   }
-
-  projectKeys = [...new Set(projectKeys.filter(Boolean))];
 
   if (projectKeys.length > 0) {
     return projectKeys;

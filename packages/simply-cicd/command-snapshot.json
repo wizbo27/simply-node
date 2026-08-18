@@ -617,6 +617,9 @@
     "flags": [
       "after-script",
       "alias",
+      "alm-base-url",
+      "alm-project-key",
+      "alm-provider",
       "before-script",
       "ci-commit-ref-name",
       "ci-environment-name",
@@ -634,8 +637,6 @@
       "enabled",
       "flags-dir",
       "instance-url",
-      "jira-base-url",
-      "jira-project-key",
       "json",
       "jwt-key-file",
       "prev-installed-package-version",

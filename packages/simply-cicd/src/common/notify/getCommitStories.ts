@@ -15,29 +15,35 @@
  */
 
 import { execa } from 'execa';
-import { getJiraProjectKeys } from '../sfConfig.js';
+import { createAlmProvider, type AlmProvider } from '../alm/index.js';
+import { getAlmProjectKeys } from '../sfConfig.js';
 import { logger } from '../logger.js';
 
 export type CommitStories = { stories: string; storiesWithUrl: string };
 
 export type GetCommitStoriesOptions = {
   debug?: boolean;
-  /** Base URL for linking a Jira issue key, e.g. `https://jira.example.com/browse`. Links are omitted if not provided. */
-  jiraBaseUrl?: string;
+  /**
+   * Base URL the issue reference is appended to, e.g. `https://jira.example.com/browse` for Jira or
+   * `https://gitlab.com/group/project/-/issues` for GitLab Issues. Links are omitted if not provided.
+   */
+  almBaseUrl?: string;
+  /** The tracker to recognize references for. Defaults to Jira. */
+  almProvider?: AlmProvider;
 };
 
 const NOT_AVAILABLE: CommitStories = { stories: 'N/A', storiesWithUrl: 'N/A' };
 
 /**
- * Retrieves Jira story keys referenced in the commit logs between two tags/commits. Fetches the
- * git history, parses commit messages between the two versions, identifies unique Jira keys
- * based on configured prefixes, and builds both a plain string and (if `jiraBaseUrl` is provided)
- * an HTML list with hyperlinks to Jira.
+ * Retrieves issue references from the commit logs between two tags/commits. Fetches the git
+ * history, hands the commit messages to the configured `AlmProvider` to recognize and render its
+ * own reference format, and returns both a plain string and (if `almBaseUrl` is provided) an HTML
+ * list with hyperlinks.
  */
 export async function getCommitStories(
   previousVersion: string | undefined,
   targetVersion: string | undefined,
-  jiraStoryPrefix: string | undefined,
+  almProjectKey: string | undefined,
   options?: GetCommitStoriesOptions,
 ): Promise<CommitStories> {
   if (
@@ -62,26 +68,15 @@ export async function getCommitStories(
       return NOT_AVAILABLE;
     }
 
-    const prefixes = getJiraProjectKeys(jiraStoryPrefix);
-    if (prefixes.length === 0) {
+    const almProvider = options?.almProvider ?? createAlmProvider('jira');
+    const issues = almProvider.extractIssues(commits, getAlmProjectKeys(almProjectKey));
+
+    if (issues.length === 0) {
       return NOT_AVAILABLE;
     }
 
-    const escapedPrefixes = prefixes.map((p) => p.replace(/[-/^$*+?.()|[\]{}]/g, '\\$&'));
-    const storyRegex = new RegExp(`(?:${escapedPrefixes.join('|')})-[0-9]+`, 'gi');
-    const stories = [...new Set(commits.toUpperCase().match(storyRegex) ?? [])].sort();
-
-    if (stories.length === 0) {
-      return NOT_AVAILABLE;
-    }
-
-    const storiesString = stories.join(', ');
-    const jiraBaseUrl = options?.jiraBaseUrl;
-    const storiesWithUrl = jiraBaseUrl
-      ? stories.map((story) => `<a href='${jiraBaseUrl}/${story}'>${story}</a>`).join(', ')
-      : storiesString;
-
-    return { stories: storiesString, storiesWithUrl };
+    const { plain, html } = almProvider.render(issues, options?.almBaseUrl);
+    return { stories: plain, storiesWithUrl: html };
   } catch (error) {
     logger.error(`Error getting commit stories: ${(error as Error).message}`);
     if (options?.debug) {

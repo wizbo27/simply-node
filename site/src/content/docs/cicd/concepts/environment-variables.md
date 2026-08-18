@@ -86,12 +86,13 @@ Most of these correspond 1:1 with a predefined GitLab CI variable of the same sh
 
 ### Notifications (see [Teams notifications](/cicd/guides/teams-notifications/))
 
-| Flag                             | Environment variable           |
-| -------------------------------- | ------------------------------ |
-| `--enabled`                      | `SIMPLY_CICD_ENABLED`          |
-| `--webhook-url` (`notify teams`) | `SIMPLY_CICD_WEBHOOK_URL`      |
-| `--jira-base-url`                | `SIMPLY_CICD_JIRA_BASE_URL`    |
-| `--jira-project-key`             | `SIMPLY_CICD_JIRA_PROJECT_KEY` |
+| Flag                             | Environment variable          |
+| -------------------------------- | ----------------------------- |
+| `--enabled`                      | `SIMPLY_CICD_ENABLED`         |
+| `--webhook-url` (`notify teams`) | `SIMPLY_CICD_WEBHOOK_URL`     |
+| `--alm-base-url`                 | `SIMPLY_CICD_ALM_BASE_URL`    |
+| `--alm-project-key`              | `SIMPLY_CICD_ALM_PROJECT_KEY` |
+| `--alm-provider`                 | `SIMPLY_CICD_ALM_PROVIDER`    |
 
 `--teams-webhook-url` (`notify project`/`notify happy-soup`) accepts multiple values, one per Teams channel, and is not backed by an environment variable — see the note on multi-value flags above.
 
