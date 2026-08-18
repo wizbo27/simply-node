@@ -96,7 +96,6 @@ export const gitOpsFlags = {
 export const vcsFlags = {
   'vcs-host': Flags.string({
     summary: messages.getMessage('flags.vcs-host.summary'),
-    default: 'gitlab.com',
     env: 'SIMPLY_CICD_VCS_HOST',
   }),
   'vcs-provider': Flags.custom<VcsProviderKind>({ options: listVcsProviderKinds() })({

@@ -47,14 +47,17 @@ describe('GitLabProvider', () => {
     vi.unstubAllGlobals();
   });
 
-  it('throws if host and token are both missing', () => {
-    expect(() => new GitLabProvider({ host: '', token })).toThrow('GitLab host is required.');
+  it('throws if the token is missing', () => {
     expect(() => new GitLabProvider({ host, token: '' })).toThrow('GitLab access token is required.');
+  });
+
+  it('falls back to gitlab.com when no host is supplied', () => {
+    expect(new GitLabProvider({ token }).host).toBe('gitlab.com');
   });
 
   it('derives the API URL from the host, and the host from an explicit API URL', () => {
     expect(new GitLabProvider({ host, token }).host).toBe(host);
-    expect(new GitLabProvider({ host: '', token, apiUrl }).host).toBe(host);
+    expect(new GitLabProvider({ token, apiUrl }).host).toBe(host);
   });
 
   it('paginates listProjects using the X-Next-Page header', async () => {

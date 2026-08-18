@@ -67,7 +67,7 @@ export type DeploymentCloseOutConfig = {
   ciCommitRefName: string;
   deployReleaseDate?: string;
   deployConfigFile?: string;
-  vcsHost: string;
+  vcsHost?: string;
   vcsProvider: VcsProviderKind;
 };
 
@@ -116,7 +116,7 @@ export type TagDeploymentConfig = OrgAuthConfig & {
   ciMergeRequestProjectUrl?: string;
   ciMergeRequestIid?: string;
   debug?: boolean;
-  vcsHost: string;
+  vcsHost?: string;
   vcsProvider: VcsProviderKind;
 };
 
@@ -180,7 +180,7 @@ export type DeployHappySoupOptions = OrgAuthConfig & {
   testLevel?: string;
   tests?: string;
   ciJobToken?: string;
-  vcsHost: string;
+  vcsHost?: string;
   vcsProvider: VcsProviderKind;
   installType?: 'All' | 'Delta' | 'Upgrade';
   wait?: string;

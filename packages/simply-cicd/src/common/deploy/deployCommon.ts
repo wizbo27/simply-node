@@ -408,7 +408,7 @@ export type RunDeploymentStepsConfig = OrgAuthConfig & {
   testLevel?: string;
   tests?: string;
   ciJobToken: string;
-  vcsHost: string;
+  vcsHost?: string;
   vcsProvider: VcsProviderKind;
 };
 

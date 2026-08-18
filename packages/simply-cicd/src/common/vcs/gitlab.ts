@@ -88,6 +88,9 @@ function projectSegment(project: VcsProjectRef): string {
 
 /** A `VcsProvider` implementation for GitLab, backed by the GitLab REST API v4. */
 export class GitLabProvider implements VcsProvider {
+  /** Used when no `--vcs-host` is supplied, so selecting a provider is enough to reach its SaaS instance. */
+  public static readonly defaultHost = 'gitlab.com';
+
   public readonly kind = 'gitlab' as const;
 
   public readonly terminology: VcsTerminology = {
@@ -103,16 +106,13 @@ export class GitLabProvider implements VcsProvider {
 
   public constructor(options: VcsProviderOptions) {
     const { host, token, apiUrl } = options;
-    if (!host && !apiUrl) {
-      throw new Error('GitLab host is required.');
-    }
     if (!token) {
       throw new Error('GitLab access token is required.');
     }
-    this.apiUrl = (apiUrl ?? `https://${host}/api/v4`).replace(/\/+$/, '');
+    this.apiUrl = (apiUrl ?? `https://${host ?? GitLabProvider.defaultHost}/api/v4`).replace(/\/+$/, '');
     // When only an API URL is supplied (the dependabot path), recover the host from it so the
     // remote-URL builders stay usable.
-    this.host = host || new URL(this.apiUrl).host;
+    this.host = host ?? new URL(this.apiUrl).host;
     this.token = token;
   }
 

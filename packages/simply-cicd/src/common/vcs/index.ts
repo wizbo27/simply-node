@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+import { GitHubProvider } from './github.js';
 import { GitLabProvider } from './gitlab.js';
 import { registerVcsProvider } from './registry.js';
 
 registerVcsProvider('gitlab', (options) => new GitLabProvider(options));
+registerVcsProvider('github', (options) => new GitHubProvider(options));
 
 export { createVcsProvider, listVcsProviderKinds, registerVcsProvider } from './registry.js';
 
+export { GitHubProvider } from './github.js';
 export { GitLabProvider } from './gitlab.js';
 
 export type {

@@ -97,7 +97,7 @@ export type ProjectStageFlagValues = {
   'test-level'?: string;
   'test-suite'?: string;
   tests?: string;
-  'vcs-host': string;
+  'vcs-host'?: string;
   'vcs-provider': DeployProjectOptions['vcsProvider'];
 };
 

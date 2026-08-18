@@ -95,7 +95,7 @@ export type VcsCiContext = {
 /** Everything a provider needs to talk to a specific instance of its platform. */
 export type VcsProviderOptions = {
   /** The instance hostname, e.g. `gitlab.com` or `github.com`. */
-  host: string;
+  host?: string;
   token: string;
   /** Overrides the provider's derived API base URL. Rarely needed outside self-hosted instances. */
   apiUrl?: string;

@@ -122,7 +122,7 @@ export type CreatePackageVersionOptions = {
   alwaysCreatePackage?: boolean;
   packageReleaseBranchPrefix?: string;
   codeCoverageMinimum?: string;
-  vcsHost: string;
+  vcsHost?: string;
   vcsProvider: VcsProviderKind;
 };
 

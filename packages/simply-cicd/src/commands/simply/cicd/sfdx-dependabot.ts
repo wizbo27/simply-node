@@ -174,8 +174,8 @@ export default class SfdxDependabot extends SfCommand<SfdxDependabotSummary> {
       options.devhubUsername,
       options.subscriberPackageVersionId,
     );
+    // The API URL is supplied directly here, so the provider derives its host from it.
     const vcsProvider = createVcsProvider(flags['vcs-provider'], {
-      host: '',
       apiUrl: options.gitlabApiUrl,
       token: options.gitlabToken,
     });

@@ -73,7 +73,7 @@ export type CreateFallbackTagOptions = {
   lastTag?: string;
   out?: string;
   debug?: boolean;
-  vcsHost: string;
+  vcsHost?: string;
   vcsProvider: VcsProviderKind;
 };
 

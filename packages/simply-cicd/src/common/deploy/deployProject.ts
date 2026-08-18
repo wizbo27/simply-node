@@ -125,7 +125,7 @@ export type DeployProjectOptions = OrgAuthConfig &
     startFrom?: string;
     tests?: string;
     ciJobToken: string;
-    vcsHost: string;
+    vcsHost?: string;
     vcsProvider: VcsProviderKind;
     installType?: 'All' | 'Delta' | 'Upgrade';
   };

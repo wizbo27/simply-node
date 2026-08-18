@@ -56,7 +56,7 @@ describe('build create-package-version', () => {
     process.env.PACKAGE_CHANGED = originalPackageChanged;
   });
 
-  it('parses flags and delegates to createPackageVersion, defaulting vcs-host/vcs-provider/code-coverage-minimum', async () => {
+  it('parses flags and delegates to createPackageVersion, defaulting vcs-provider/code-coverage-minimum', async () => {
     const result = await BuildCreatePackageVersion.run(baseArgs);
 
     expect(result.skipped).toBe(false);
@@ -65,7 +65,7 @@ describe('build create-package-version', () => {
         ciCommitRefName: 'main',
         ciCommitSha: 'abc123',
         ciPipelineId: '999',
-        vcsHost: 'gitlab.com',
+        vcsHost: undefined,
         vcsProvider: 'gitlab',
         codeCoverageMinimum: '75',
         alwaysCreatePackage: false,

@@ -44,7 +44,7 @@ describe('build create-fallback-tag', () => {
     process.env.PACKAGE_CHANGED = originalPackageChanged;
   });
 
-  it('parses flags and delegates to createFallbackTag, defaulting --out and vcs-host/vcs-provider', async () => {
+  it('parses flags and delegates to createFallbackTag, defaulting --out and vcs-provider', async () => {
     const result = await BuildCreateFallbackTag.run(baseArgs);
 
     expect(result).toEqual({ skipped: false, created: true, tag: 'v1.1.0-1', packageId: '04t123456789012' });
@@ -55,7 +55,7 @@ describe('build create-fallback-tag', () => {
         projectAccessToken: 'secret-token',
         ciPipelineId: '999',
         out: 'subscriberPackageVersionId.env',
-        vcsHost: 'gitlab.com',
+        vcsHost: undefined,
         vcsProvider: 'gitlab',
       }),
     );
