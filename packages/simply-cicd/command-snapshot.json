@@ -119,8 +119,13 @@
     "flagAliases": [],
     "flagChars": [],
     "flags": [
+      "ci-commit-sha",
       "ci-merge-request-iid",
       "ci-project-id",
+      "ci-pull-request-number",
+      "ci-repository",
+      "ci-run-id",
+      "ci-server-url",
       "debug",
       "disabled",
       "flags-dir",
@@ -128,7 +133,9 @@
       "json",
       "out",
       "project-access-token",
-      "to"
+      "to",
+      "vcs-host",
+      "vcs-provider"
     ],
     "plugin": "@simplysf/simply-cicd"
   },
@@ -138,8 +145,13 @@
     "flagAliases": [],
     "flagChars": [],
     "flags": [
+      "ci-commit-sha",
       "ci-merge-request-iid",
       "ci-project-id",
+      "ci-pull-request-number",
+      "ci-repository",
+      "ci-run-id",
+      "ci-server-url",
       "debug",
       "disabled",
       "flags-dir",
@@ -147,7 +159,9 @@
       "json",
       "out",
       "project-access-token",
-      "to"
+      "to",
+      "vcs-host",
+      "vcs-provider"
     ],
     "plugin": "@simplysf/simply-cicd"
   },

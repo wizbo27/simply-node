@@ -105,17 +105,40 @@ export const vcsFlags = {
   }),
 };
 
-/** Flags shared by the (inherently GitLab-specific) `generate-flow-diff` and `generate-flexipage-diff` commands. */
+/**
+ * Flags shared by the `generate-flow-diff` and `generate-flexipage-diff` commands. The platform
+ * context flags are optional and only meaningful for their own provider; each upstream reporter
+ * falls back to its platform's CI environment variables for anything not passed.
+ */
 export const diffFlags = {
+  ...vcsFlags,
   'ci-project-id': Flags.string({
     summary: messages.getMessage('flags.diff-ci-project-id.summary'),
-    required: true,
     env: 'SIMPLY_CICD_CI_PROJECT_ID',
   }),
   'ci-merge-request-iid': Flags.string({
     summary: messages.getMessage('flags.diff-ci-merge-request-iid.summary'),
-    required: true,
     env: 'SIMPLY_CICD_CI_MERGE_REQUEST_IID',
+  }),
+  'ci-repository': Flags.string({
+    summary: messages.getMessage('flags.diff-ci-repository.summary'),
+    env: 'SIMPLY_CICD_CI_REPOSITORY',
+  }),
+  'ci-pull-request-number': Flags.string({
+    summary: messages.getMessage('flags.diff-ci-pull-request-number.summary'),
+    env: 'SIMPLY_CICD_CI_PULL_REQUEST_NUMBER',
+  }),
+  'ci-run-id': Flags.string({
+    summary: messages.getMessage('flags.diff-ci-run-id.summary'),
+    env: 'SIMPLY_CICD_CI_RUN_ID',
+  }),
+  'ci-server-url': Flags.string({
+    summary: messages.getMessage('flags.diff-ci-server-url.summary'),
+    env: 'SIMPLY_CICD_CI_SERVER_URL',
+  }),
+  'ci-commit-sha': Flags.string({
+    summary: messages.getMessage('flags.diff-ci-commit-sha.summary'),
+    env: 'SIMPLY_CICD_CI_COMMIT_SHA',
   }),
   from: Flags.string({ summary: messages.getMessage('flags.diff-from.summary'), required: true }),
   to: Flags.string({ summary: messages.getMessage('flags.diff-to.summary'), required: true }),

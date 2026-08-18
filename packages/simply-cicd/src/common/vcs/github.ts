@@ -131,7 +131,7 @@ export class GitHubProvider implements VcsProvider {
 
   public readonly host: string;
 
-  private readonly apiUrl: string;
+  public readonly apiUrl: string;
   private readonly token: string;
 
   public constructor(options: VcsProviderOptions) {

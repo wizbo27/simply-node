@@ -14,84 +14,26 @@
  * limitations under the License.
  */
 
-import { execa } from 'execa';
-import { logger } from '../logger.js';
-import { installFlowDeltaPlugin } from '../sfPlugins.js';
+import {
+  FLEXIPAGE_DELTA,
+  generateDiff,
+  runDelta,
+  type GenerateDiffOptions,
+  type GenerateDiffResult,
+  type RunDeltaOptions,
+} from './deltaRunner.js';
 
-export type RunFlexipageDeltaOptions = {
-  from: string;
-  to: string;
-  out?: string;
-  projectAccessToken?: string;
-  ciProjectId?: string;
-  ciMergeRequestIid?: string;
-  debug?: boolean;
-};
+export type RunFlexipageDeltaOptions = RunDeltaOptions;
+export type GenerateFlexipageDiffOptions = GenerateDiffOptions;
+export type GenerateFlexipageDiffResult = GenerateDiffResult;
 
 /**
- * Core runner for the upstream `flexipage-delta` / `flexipage-delta-gitlab` binaries (installed via
- * `installFlowDeltaPlugin`). GitLab-specific by nature of those binaries themselves — not routed
- * through the `VcsProvider` abstraction. Does not catch its own errors; callers decide how to handle them.
+ * Runs the upstream `flexipage-delta` binary over the commit range, then the reporter binary for
+ * the selected VCS platform. Does not catch its own errors; callers decide how to handle them.
  */
 export async function runFlexipageDelta(options: RunFlexipageDeltaOptions): Promise<void> {
-  const {
-    from,
-    to,
-    out = 'flexipage-delta-out',
-    projectAccessToken,
-    ciProjectId,
-    ciMergeRequestIid,
-    debug = false,
-  } = options;
-  if (!from || !to) {
-    throw new Error('Missing "from" or "to" commit SHA. Provide --from/--to arguments.');
-  }
-
-  await installFlowDeltaPlugin(debug);
-  await execa(
-    'flexipage-delta',
-    [
-      '--repo',
-      '.',
-      '--from',
-      from,
-      '--to',
-      to,
-      '--path',
-      '**/*.flexipage-meta.xml',
-      '--changed-only',
-      '--out',
-      out,
-      '--json',
-    ],
-    { stdio: 'inherit' },
-  );
-
-  // Bracket notation (rather than dot access) for the upstream binary's required env var names, which aren't camelCase.
-  const env: Record<string, string> = {};
-  if (projectAccessToken) env['FlexipageDelta_GITLAB_TOKEN'] = projectAccessToken;
-  if (ciProjectId) env.CI_PROJECT_ID = ciProjectId;
-  if (ciMergeRequestIid) env.CI_MERGE_REQUEST_IID = ciMergeRequestIid;
-  const execaOptions = Object.keys(env).length > 0 ? { env } : {};
-
-  await execa('flexipage-delta-gitlab', ['--in', out, '--token', projectAccessToken] as string[], {
-    ...execaOptions,
-    stdio: 'inherit',
-  });
+  return runDelta(FLEXIPAGE_DELTA, options);
 }
-
-function extractErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-  if (typeof error === 'string') {
-    return error;
-  }
-  return 'Unknown error running flexipage-delta';
-}
-
-export type GenerateFlexipageDiffOptions = RunFlexipageDeltaOptions & { disabled?: boolean };
-export type GenerateFlexipageDiffResult = { skipped: boolean; success: boolean };
 
 /**
  * Action-handler wrapper around `runFlexipageDelta`: checks the job-level skip flag, then runs the
@@ -104,19 +46,5 @@ export type GenerateFlexipageDiffResult = { skipped: boolean; success: boolean }
 export async function generateFlexipageDiff(
   options: GenerateFlexipageDiffOptions,
 ): Promise<GenerateFlexipageDiffResult> {
-  if (options.disabled) {
-    logger.info('Flexipage diff generation is disabled. Skipping.');
-    return { skipped: true, success: false };
-  }
-
-  logger.info('Generating flexipage diff using flexipage-delta...');
-  try {
-    await runFlexipageDelta(options);
-    logger.success('Flexipage diff generation completed.');
-    return { skipped: false, success: true };
-  } catch (error) {
-    logger.error('Flexipage diff generation failed.');
-    logger.error(extractErrorMessage(error));
-    return { skipped: false, success: false };
-  }
+  return generateDiff(FLEXIPAGE_DELTA, options);
 }

@@ -111,18 +111,84 @@ describe('flowDelta', () => {
         ],
         { stdio: 'inherit' },
       );
-      expect(execa).toHaveBeenCalledWith('flow-delta-gitlab', ['--in', 'test-out', '--token', 'token'], {
-        env: { ['FlowDelta_GITLAB_TOKEN']: 'token', CI_PROJECT_ID: '123', CI_MERGE_REQUEST_IID: '456' },
+      expect(execa).toHaveBeenCalledWith(
+        'flow-delta-gitlab',
+        [
+          '--in',
+          'test-out',
+          '--token',
+          'token',
+          '--api-url',
+          'https://gitlab.com/api/v4',
+          '--project-id',
+          '123',
+          '--mr-iid',
+          '456',
+        ],
+        { stdio: 'inherit' },
+      );
+    });
+
+    it('should pass only --in when no reporter context is provided', async () => {
+      await runFlowDelta({ from: 'a', to: 'b' });
+
+      expect(execa).toHaveBeenNthCalledWith(2, 'flow-delta-gitlab', ['--in', 'flow-delta-out'], {
         stdio: 'inherit',
       });
     });
 
-    it('should call execa for flow-delta-gitlab without env if no gitlab options are provided', async () => {
-      await runFlowDelta({ from: 'a', to: 'b' });
-
-      expect(execa).toHaveBeenNthCalledWith(2, 'flow-delta-gitlab', ['--in', 'flow-delta-out', '--token', undefined], {
-        stdio: 'inherit',
+    it('should run the GitHub reporter with GitHub context when the provider is github', async () => {
+      await runFlowDelta({
+        from: 'a',
+        to: 'b',
+        vcsProvider: 'github',
+        projectAccessToken: 'ghp-token',
+        commitSha: 'sha123',
+        ciRepository: 'my-org/my-repo',
+        ciPullRequestNumber: '45',
+        ciRunId: '987',
+        // GitLab context is ignored for a GitHub run.
+        ciProjectId: '123',
+        ciMergeRequestIid: '456',
       });
+
+      expect(execa).toHaveBeenNthCalledWith(
+        2,
+        'flow-delta-github',
+        [
+          '--in',
+          'flow-delta-out',
+          '--token',
+          'ghp-token',
+          '--commit-sha',
+          'sha123',
+          '--api-url',
+          'https://api.github.com',
+          '--repo',
+          'my-org/my-repo',
+          '--pr',
+          '45',
+          '--run-id',
+          '987',
+        ],
+        { stdio: 'inherit' },
+      );
+    });
+
+    it('should derive the reporter api-url from a self-hosted vcs-host', async () => {
+      await runFlowDelta({
+        from: 'a',
+        to: 'b',
+        projectAccessToken: 'token',
+        vcsHost: 'gitlab.example.com',
+      });
+
+      expect(execa).toHaveBeenNthCalledWith(
+        2,
+        'flow-delta-gitlab',
+        ['--in', 'flow-delta-out', '--token', 'token', '--api-url', 'https://gitlab.example.com/api/v4'],
+        { stdio: 'inherit' },
+      );
     });
   });
 });

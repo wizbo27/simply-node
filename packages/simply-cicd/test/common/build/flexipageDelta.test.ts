@@ -124,19 +124,56 @@ describe('flexipageDelta', () => {
         ciMergeRequestIid: '456',
       });
 
-      expect(execa).toHaveBeenCalledWith('flexipage-delta-gitlab', ['--in', 'custom-out', '--token', 'token'], {
-        env: { ['FlexipageDelta_GITLAB_TOKEN']: 'token', CI_PROJECT_ID: '123', CI_MERGE_REQUEST_IID: '456' },
+      expect(execa).toHaveBeenCalledWith(
+        'flexipage-delta-gitlab',
+        [
+          '--in',
+          'custom-out',
+          '--token',
+          'token',
+          '--api-url',
+          'https://gitlab.com/api/v4',
+          '--project-id',
+          '123',
+          '--mr-iid',
+          '456',
+        ],
+        { stdio: 'inherit' },
+      );
+    });
+
+    it('should pass only --in when no reporter context is provided', async () => {
+      await runFlexipageDelta(baseOptions);
+
+      expect(execa).toHaveBeenNthCalledWith(2, 'flexipage-delta-gitlab', ['--in', 'flexipage-delta-out'], {
         stdio: 'inherit',
       });
     });
 
-    it('should call execa for flexipage-delta-gitlab without env if no gitlab options are provided', async () => {
-      await runFlexipageDelta(baseOptions);
+    it('should run the GitHub reporter when the provider is github', async () => {
+      await runFlexipageDelta({
+        ...baseOptions,
+        vcsProvider: 'github',
+        projectAccessToken: 'ghp-token',
+        ciRepository: 'my-org/my-repo',
+        ciPullRequestNumber: '45',
+      });
 
       expect(execa).toHaveBeenNthCalledWith(
         2,
-        'flexipage-delta-gitlab',
-        ['--in', 'flexipage-delta-out', '--token', undefined],
+        'flexipage-delta-github',
+        [
+          '--in',
+          'flexipage-delta-out',
+          '--token',
+          'ghp-token',
+          '--api-url',
+          'https://api.github.com',
+          '--repo',
+          'my-org/my-repo',
+          '--pr',
+          '45',
+        ],
         { stdio: 'inherit' },
       );
     });

@@ -52,11 +52,31 @@ The VCS platform hosting this project.
 
 # flags.diff-ci-project-id.summary
 
-GitLab CI project ID.
+GitLab only: numeric CI project ID of the project to post the diff to.
 
 # flags.diff-ci-merge-request-iid.summary
 
-GitLab CI merge request internal ID.
+GitLab only: internal ID of the merge request to post the diff to.
+
+# flags.diff-ci-repository.summary
+
+GitHub only: repository to post the diff to, as owner/repo.
+
+# flags.diff-ci-pull-request-number.summary
+
+GitHub only: number of the pull request to post the diff to.
+
+# flags.diff-ci-run-id.summary
+
+GitHub only: Actions run ID, used to build links back to the run's artifacts.
+
+# flags.diff-ci-server-url.summary
+
+GitHub only: server URL, for instances other than github.com.
+
+# flags.diff-ci-commit-sha.summary
+
+Commit SHA to attribute the posted diff to.
 
 # flags.diff-from.summary
 

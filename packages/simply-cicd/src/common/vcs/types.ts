@@ -114,6 +114,9 @@ export interface VcsProvider {
   /** The instance hostname this provider was built for. */
   readonly host: string;
 
+  /** The API base URL this provider talks to, derived from the host unless overridden. */
+  readonly apiUrl: string;
+
   /** Reads the upstream repository's identity from this platform's CI environment variables. */
   getCiContext(): VcsCiContext;
 
