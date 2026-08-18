@@ -54,8 +54,8 @@ describe('sfdx-dependabot', () => {
 
   beforeEach(() => {
     originalEnv = { ...process.env };
-    process.env.SFDX_DEPENDABOT_GITLAB_API_URL = 'https://gitlab.example.com/api/v4';
-    process.env.SFDX_DEPENDABOT_GITLAB_TOKEN = 'test-token';
+    process.env.SFDX_DEPENDABOT_VCS_API_URL = 'https://gitlab.example.com/api/v4';
+    process.env.SFDX_DEPENDABOT_VCS_TOKEN = 'test-token';
     process.env.SFDX_DEPENDABOT_ROOT_GROUP_ID = '12345';
     process.env.SUBSCRIBER_PACKAGE_VERSION_ID = '04tSJ000000AKwjYAG';
     process.env.DEVHUB_TOOLING_USERNAME = 'hub@example.com';
@@ -179,6 +179,30 @@ describe('sfdx-dependabot', () => {
       expect(md).toContain('| New version                   | `2.41.0-1`  |');
       expect(md).toContain('| Subscriber package version ID | `04tSJ000000AKwjYAG`       |');
     });
+
+    it('defaults to merge-request wording', () => {
+      const md = generateMrDescription({
+        packageName: 'lwc-utilities',
+        oldVersions: [],
+        packageVersion: '2.41.0-1',
+        subscriberPackageVersionId: '04tSJ000000AKwjYAG',
+      });
+      expect(md).toContain('This merge request updates a Salesforce 2GP package dependency.');
+      expect(md).not.toContain('pull request');
+    });
+
+    it('adopts the provider vocabulary when given one', () => {
+      const md = generateMrDescription({
+        packageName: 'lwc-utilities',
+        oldVersions: [],
+        packageVersion: '2.41.0-1',
+        subscriberPackageVersionId: '04tSJ000000AKwjYAG',
+        changeRequest: 'pull request',
+      });
+      expect(md).toContain('This pull request updates a Salesforce 2GP package dependency.');
+      expect(md).toContain('This pull request was generated automatically');
+      expect(md).not.toContain('merge request');
+    });
   });
 
   describe('run', () => {
@@ -191,8 +215,8 @@ describe('sfdx-dependabot', () => {
     });
 
     it('fails globally if a critical variable is missing', async () => {
-      delete process.env.SFDX_DEPENDABOT_GITLAB_TOKEN;
-      await expect(SfdxDependabot.run([])).rejects.toThrow(/GitLab token/i);
+      delete process.env.SFDX_DEPENDABOT_VCS_TOKEN;
+      await expect(SfdxDependabot.run([])).rejects.toThrow(/VCS access token/i);
     });
 
     it('executes dry-run flawlessly with zero write calls', async () => {

@@ -647,22 +647,23 @@
     "flagChars": [],
     "flags": [
       "branch-prefix",
+      "change-request-labels",
       "devhub-username",
       "dry-run",
       "fail-on-error",
       "flags-dir",
-      "gitlab-api-url",
-      "gitlab-token",
       "json",
       "max-projects",
-      "mr-labels",
       "project-allowlist",
       "project-denylist",
       "root-group-id",
       "skip-archived",
       "skip-forks",
       "subscriber-package-version-id",
-      "vcs-provider"
+      "vcs-api-url",
+      "vcs-host",
+      "vcs-provider",
+      "vcs-token"
     ],
     "plugin": "@simplysf/simply-cicd"
   }

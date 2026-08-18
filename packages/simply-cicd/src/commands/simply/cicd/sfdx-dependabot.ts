@@ -43,14 +43,19 @@ export default class SfdxDependabot extends SfCommand<SfdxDependabotSummary> {
 
   public static readonly flags = {
     ...SfCommand.baseFlags,
-    'gitlab-api-url': Flags.string({
-      summary: messages.getMessage('flags.gitlab-api-url.summary'),
-      description: messages.getMessage('flags.gitlab-api-url.description'),
-      env: 'SIMPLY_CICD_GITLAB_API_URL',
+    'vcs-host': Flags.string({
+      summary: messages.getMessage('flags.vcs-host.summary'),
+      description: messages.getMessage('flags.vcs-host.description'),
+      env: 'SIMPLY_CICD_VCS_HOST',
     }),
-    'gitlab-token': Flags.string({
-      summary: messages.getMessage('flags.gitlab-token.summary'),
-      env: 'SIMPLY_CICD_GITLAB_TOKEN',
+    'vcs-api-url': Flags.string({
+      summary: messages.getMessage('flags.vcs-api-url.summary'),
+      description: messages.getMessage('flags.vcs-api-url.description'),
+      env: 'SIMPLY_CICD_VCS_API_URL',
+    }),
+    'vcs-token': Flags.string({
+      summary: messages.getMessage('flags.vcs-token.summary'),
+      env: 'SIMPLY_CICD_VCS_TOKEN',
     }),
     'root-group-id': Flags.string({
       summary: messages.getMessage('flags.root-group-id.summary'),
@@ -89,9 +94,9 @@ export default class SfdxDependabot extends SfCommand<SfdxDependabotSummary> {
       summary: messages.getMessage('flags.branch-prefix.summary'),
       env: 'SIMPLY_CICD_BRANCH_PREFIX',
     }),
-    'mr-labels': Flags.string({
-      summary: messages.getMessage('flags.mr-labels.summary'),
-      env: 'SIMPLY_CICD_MR_LABELS',
+    'change-request-labels': Flags.string({
+      summary: messages.getMessage('flags.change-request-labels.summary'),
+      env: 'SIMPLY_CICD_CHANGE_REQUEST_LABELS',
     }),
     'fail-on-error': Flags.boolean({
       summary: messages.getMessage('flags.fail-on-error.summary'),
@@ -111,38 +116,35 @@ export default class SfdxDependabot extends SfCommand<SfdxDependabotSummary> {
   public async run(): Promise<SfdxDependabotSummary> {
     const { flags } = await this.parse(SfdxDependabot);
 
-    const gitlabApiUrl = resolveOptionalString(flags['gitlab-api-url'], [
-      process.env.SFDX_DEPENDABOT_GITLAB_API_URL,
+    // Only needed for self-hosted instances; otherwise the provider derives its own API URL.
+    const vcsApiUrl = resolveOptionalString(flags['vcs-api-url'], [
+      process.env.SFDX_DEPENDABOT_VCS_API_URL,
       process.env.CI_API_V4_URL,
     ]);
-    const gitlabToken = resolveOptionalString(flags['gitlab-token'], [process.env.SFDX_DEPENDABOT_GITLAB_TOKEN]);
+    const vcsToken = resolveOptionalString(flags['vcs-token'], [process.env.SFDX_DEPENDABOT_VCS_TOKEN]);
     const rootGroupId = resolveOptionalString(flags['root-group-id'], [process.env.SFDX_DEPENDABOT_ROOT_GROUP_ID]);
     const subscriberPackageVersionId = resolveOptionalString(flags['subscriber-package-version-id'], [
       process.env.SUBSCRIBER_PACKAGE_VERSION_ID,
     ]);
     const devhubUsername = resolveOptionalString(flags['devhub-username'], [process.env.DEVHUB_TOOLING_USERNAME]);
 
-    if (!gitlabApiUrl) {
-      throw messages.createError('error.missingGitlabApiUrl');
-    }
-    if (!gitlabToken) {
-      throw new Error('Missing GitLab token. Provide --gitlab-token or set SFDX_DEPENDABOT_GITLAB_TOKEN.');
+    if (!vcsToken) {
+      throw messages.createError('error.missingVcsToken');
     }
     if (!rootGroupId) {
-      throw new Error('Missing GitLab root group ID. Provide --root-group-id or set SFDX_DEPENDABOT_ROOT_GROUP_ID.');
+      throw messages.createError('error.missingRootGroupId');
     }
     if (!subscriberPackageVersionId) {
-      throw new Error(
-        'Missing subscriber package version ID. Provide --subscriber-package-version-id or set SUBSCRIBER_PACKAGE_VERSION_ID.',
-      );
+      throw messages.createError('error.missingSubscriberPackageVersionId');
     }
     if (!devhubUsername) {
-      throw new Error('Missing DevHub username/alias. Provide --devhub-username or set DEVHUB_TOOLING_USERNAME.');
+      throw messages.createError('error.missingDevhubUsername');
     }
 
     const options: ResolvedOptions = {
-      gitlabApiUrl,
-      gitlabToken,
+      vcsHost: flags['vcs-host'],
+      vcsApiUrl,
+      vcsToken,
       rootGroupId,
       subscriberPackageVersionId,
       devhubUsername,
@@ -156,7 +158,9 @@ export default class SfdxDependabot extends SfCommand<SfdxDependabotSummary> {
         [process.env.SFDX_DEPENDABOT_BRANCH_PREFIX],
         'devops/dependabot',
       ),
-      mrLabels: resolveString(flags['mr-labels'], [process.env.SFDX_DEPENDABOT_MR_LABELS]),
+      changeRequestLabels: resolveString(flags['change-request-labels'], [
+        process.env.SFDX_DEPENDABOT_CHANGE_REQUEST_LABELS,
+      ]),
       failOnError: resolveBoolean(flags['fail-on-error'], process.env.SFDX_DEPENDABOT_FAIL_ON_ERROR, false),
       maxProjects:
         flags['max-projects'] ??
@@ -174,10 +178,10 @@ export default class SfdxDependabot extends SfCommand<SfdxDependabotSummary> {
       options.devhubUsername,
       options.subscriberPackageVersionId,
     );
-    // The API URL is supplied directly here, so the provider derives its host from it.
     const vcsProvider = createVcsProvider(flags['vcs-provider'], {
-      apiUrl: options.gitlabApiUrl,
-      token: options.gitlabToken,
+      host: options.vcsHost,
+      apiUrl: options.vcsApiUrl,
+      token: options.vcsToken,
     });
 
     const { allProjects, filteredProjects, skippedCount } = await discoverEligibleProjects(

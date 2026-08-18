@@ -151,19 +151,22 @@ export type GenerateMrDescriptionInput = {
   oldVersions: string[];
   packageVersion: string;
   subscriberPackageVersionId: string;
+  /** The platform's word for a proposed change, from `VcsProvider.terminology`. */
+  changeRequest?: string;
 };
 
-/** Renders the markdown description body for a dependency-bump merge request. */
+/** Renders the markdown description body for a dependency-bump change request. */
 export function generateMrDescription({
   packageName,
   oldVersions,
   packageVersion,
   subscriberPackageVersionId,
+  changeRequest = 'merge request',
 }: GenerateMrDescriptionInput): string {
   const previousVersionsStr = oldVersions.length > 0 ? oldVersions.join(', ') : 'unknown';
   return `## SFDX Project Dependabot Update
 
-This merge request updates a Salesforce 2GP package dependency.
+This ${changeRequest} updates a Salesforce 2GP package dependency.
 
 | Field                         | Value            |
 | ----------------------------- | ---------------- |
@@ -178,12 +181,12 @@ This merge request updates a Salesforce 2GP package dependency.
 
 ### Validation
 
-This merge request should be validated by the downstream repository pipeline
+This ${changeRequest} should be validated by the downstream repository pipeline
 before merge.
 
 ### Notes
 
-This merge request was generated automatically by \`sf simply cicd sfdx-dependabot\`.`;
+This ${changeRequest} was generated automatically by \`sf simply cicd sfdx-dependabot\`.`;
 }
 
 export type SfdxDependabotSummary = {
@@ -204,8 +207,9 @@ export type SfdxDependabotSummary = {
 };
 
 export type ResolvedOptions = {
-  gitlabApiUrl: string;
-  gitlabToken: string;
+  vcsHost?: string;
+  vcsApiUrl?: string;
+  vcsToken: string;
   rootGroupId: string;
   subscriberPackageVersionId: string;
   devhubUsername: string;
@@ -215,7 +219,7 @@ export type ResolvedOptions = {
   skipArchived: boolean;
   skipForks: boolean;
   branchPrefix: string;
-  mrLabels: string;
+  changeRequestLabels: string;
   failOnError: boolean;
   maxProjects?: number;
 };
@@ -254,18 +258,17 @@ export async function discoverEligibleProjects(
   rootGroupId: string,
   options: ResolvedOptions,
 ): Promise<{ allProjects: VcsProject[]; filteredProjects: VcsProject[]; skippedCount: number }> {
-  logger.info(`Discovering projects in GitLab group/path: ${rootGroupId}...`);
+  logger.info(`Discovering projects in group/path: ${rootGroupId}...`);
   let allProjects: VcsProject[];
   try {
     allProjects = await vcsProvider.listProjects(rootGroupId);
   } catch (error) {
-    throw new Error(`Failed to access GitLab root group "${rootGroupId}": ${(error as Error).message}`);
+    throw new Error(`Failed to access root group "${rootGroupId}": ${(error as Error).message}`);
   }
 
   logger.info(`Discovered ${allProjects.length} projects in group.`);
 
-  const upstreamProjectPath = process.env.CI_PROJECT_PATH;
-  const upstreamProjectId = process.env.CI_PROJECT_ID;
+  const { projectPath: upstreamProjectPath, projectId: upstreamProjectId } = vcsProvider.getCiContext();
 
   const filteredProjects: VcsProject[] = [];
   let skippedCount = 0;
@@ -337,7 +340,7 @@ export async function processProject(
 
   if (!isExplicitlyEnabled) {
     logger.info(
-      `Project ${projectPath} is skipped because automatic dependabot updates are off by default. To enable, configure the project-level GitLab CI/CD variable SFDX_DEPENDABOT_ENABLED=TRUE.`,
+      `Project ${projectPath} is skipped because automatic dependabot updates are off by default. To enable, configure the repository-level ${vcsProvider.terminology.projectVariable} SFDX_DEPENDABOT_ENABLED=TRUE.`,
     );
     counters.skipped++;
     return;
@@ -438,42 +441,42 @@ export async function applyProjectUpdate(
     await vcsProvider.commitFile(project, branchName, commitMessage, 'sfdx-project.json', updateResult.newJsonContent);
   }
 
-  logger.info(`Checking for existing open MR for branch ${branchName} in ${projectPath}...`);
-  const existingMr = await vcsProvider.findOpenMergeRequest(project, branchName, defaultBranch);
+  const { changeRequest, changeRequestShort } = vcsProvider.terminology;
 
-  const mrTitle = `chore: bump ${packageName} to ${packageVersion}`;
-  const mrDescription = generateMrDescription({
+  logger.info(`Checking for existing open ${changeRequestShort} for branch ${branchName} in ${projectPath}...`);
+  const existing = await vcsProvider.findOpenMergeRequest(project, branchName, defaultBranch);
+
+  const title = `chore: bump ${packageName} to ${packageVersion}`;
+  const description = generateMrDescription({
     packageName,
     oldVersions: updateResult.oldVersions,
     packageVersion,
     subscriberPackageVersionId: options.subscriberPackageVersionId,
+    changeRequest,
   });
+  const labels = splitLabels(options.changeRequestLabels);
 
-  if (existingMr) {
+  if (existing) {
     logger.info(
-      `Found existing open MR for ${projectPath}: ${existingMr.webUrl ?? 'unknown URL'}. Updating MR title, description, and labels...`,
+      `Found existing open ${changeRequestShort} for ${projectPath}: ${
+        existing.webUrl ?? 'unknown URL'
+      }. Updating title, description, and labels...`,
     );
-    const updatedMr = await vcsProvider.updateMergeRequest(
-      project,
-      existingMr,
-      mrTitle,
-      mrDescription,
-      splitLabels(options.mrLabels),
-    );
-    logger.success(`Successfully updated Merge Request in ${projectPath}: ${updatedMr.webUrl ?? 'unknown URL'}`);
+    const updated = await vcsProvider.updateMergeRequest(project, existing, title, description, labels);
+    logger.success(`Successfully updated ${changeRequest} in ${projectPath}: ${updated.webUrl ?? 'unknown URL'}`);
     counters.mergeRequestsAlreadyOpen++;
     counters.projectsUpdated++;
   } else {
-    logger.info(`Creating new MR for branch ${branchName} in ${projectPath}...`);
-    const createdMr = await vcsProvider.createMergeRequest(
+    logger.info(`Creating new ${changeRequestShort} for branch ${branchName} in ${projectPath}...`);
+    const created = await vcsProvider.createMergeRequest(
       project,
       branchName,
       defaultBranch,
-      mrTitle,
-      mrDescription,
-      splitLabels(options.mrLabels),
+      title,
+      description,
+      labels,
     );
-    logger.success(`Successfully created Merge Request in ${projectPath}: ${createdMr.webUrl ?? 'unknown URL'}`);
+    logger.success(`Successfully created ${changeRequest} in ${projectPath}: ${created.webUrl ?? 'unknown URL'}`);
     counters.mergeRequestsCreated++;
     counters.projectsUpdated++;
   }
